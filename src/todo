@@ -1,0 +1,7 @@
+multi threading in gateway
+
+start, end time, RTT in clock sync 
+fix leader elect msg order
+fix clock sync order
+
+prints and comments

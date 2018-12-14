@@ -1,0 +1,15 @@
+Time to Run through the events for test/event1:
+
+Without Crash
+
+With Caching : Time Taken  11.7785770893
+Without Caching : Time Taken  12.8137729168
+
+
+Time to Run through the events for test/event2:
+
+Without Crash
+
+With Caching : Time Taken  38.7222498894
+Without Caching : Time Taken  39.4791710377
+

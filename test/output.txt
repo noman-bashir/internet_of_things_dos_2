@@ -1,0 +1,478 @@
+LOAD BALANCING TESTS:
+
+TESTING WITH DIFFERENT NUMBER OF DEVICES:
+OBSERVATIONS : Always the number of devices are divided among the 2 gateways equally
+               with unique auto assigned ids
+
+Output of registerProcesses.py before running the events:
+--------------------------------------------------
+Input no. of devices to be registered (1-6): 3
+
+Door sensor has been assigned an ID 1 and registered with gateway 9091
+Motion sensor has been assigned an ID 2 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9091
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+-----------------------------------------------------
+Input no. of devices to be registered (1-6): 4
+
+Door sensor has been assigned an ID 1 and registered with gateway 9091
+Motion sensor has been assigned an ID 2 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9091
+Smart bulb has been assigned an ID 4 and registered with gateway 9090
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+----------------------------------------------------------
+Input no. of devices to be registered (1-6): 6
+
+Door sensor has been assigned an ID 1 and registered with gateway 9091
+Motion sensor has been assigned an ID 2 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9091
+Smart bulb has been assigned an ID 4 and registered with gateway 9090
+Smart outlet has been assigned an ID 5 and registered with gateway 9091
+Temperature sensor has been assigned an ID 6 and registered with gateway 9090
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+
+=============================================================================================
+
+
+EVENT 1 - NO CRASH OUTPUT :
+
+Events >>  ['D', '2', 'P', 'D', '1', 'M', '2', 'O1', '1', 'T', '2', 'D', '1', 'M', 'D']
+
+Input no. of devices to be registered (1-6): 6
+Door sensor has been assigned an ID 1 and registered with gateway 9091
+Motion sensor has been assigned an ID 2 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9091
+Smart bulb has been assigned an ID 4 and registered with gateway 9090
+Smart outlet has been assigned an ID 5 and registered with gateway 9091
+Temperature sensor has been assigned an ID 6 and registered with gateway 9090
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+ELECTION DONE: Leader is  Gateway processing tier
+ELECTION DONE: Leader is  Gateway processing tier
+
+Event 1492992893.36: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Event 1492992893.72: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+Event 1492992895.78: Beacon presence sensed
+Storing event on database with Consistency messages
+Updating Device ID 3 state on Both State Databases to True
+Event 1492992896.84: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: User has just entered the home with presence. Turning off the security system.
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+Event 1492992897.9: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+pulling data from the sensors
+Responding the bulb state to the gateway.
+Smart Bulb is ON at time 1492992897.92
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1492992899.94: Smart outlet was powered on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 5 state on Both State Databases to ON
+pulling data from the sensors
+Event 1492992901.01: Responding the temperature value to the gateway.
+The current temperature is 56 at time 1492992901.01
+Event 1492992903.02: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Event 1492992903.04: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+Event 1492992904.08: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+pulling data from the sensors
+Responding the bulb state to the gateway.
+Smart Bulb is ON at time 1492992904.11
+Event 1492992904.15: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+CACHE HIT: Data present in Cache
+GATEWAY: User is leaving the home. Turning on the security system and turn off lights.
+Gateway controlling the state of smart appliances
+Event 1492992905.1: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+=================================================================================================
+
+EVENT 1 - WITH CRASH :
+OBSERVATIONS : Recovery from crash is gracefull - device id 1,3,7 re-registered But
+	       Some Data Loss occurs ; For example : user entering is missed:
+
+Events >>  ['D', '2', 'P', 'D', '9', 'M', '8', 'O1', '6', 'T', '7', 'D', '5', 'M', 'D']
+
+Input no. of devices to be registered (1-6): 6
+Door sensor has been assigned an ID 1 and registered with gateway 9091
+Motion sensor has been assigned an ID 2 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9091
+Smart bulb has been assigned an ID 4 and registered with gateway 9090
+Smart outlet has been assigned an ID 5 and registered with gateway 9091
+Temperature sensor has been assigned an ID 6 and registered with gateway 9090
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+ELECTION DONE: Leader is  Gateway processing tier
+ELECTION DONE: Leader is  Gateway processing tier
+
+Event 1492994491.85: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Event 1492994492.2: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+
+One gateway 9091 has crashed.
+Event 1492994503.28: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Can not locate nameserver from 9090
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+Can not locate nameserver from 9090
+Can not locate nameserver from 9090
+GATEWAY: ALERT! Motion when house empty - ringing alarms
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Can not locate nameserver from 9090
+Door sensor has been assigned an ID 1 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9090
+Smart outlet has been assigned an ID 5 and registered with gateway 9090
+One gateway 9091 has crashed.
+
+Event 1492994511.32: Smart outlet was powered on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 5 state on Both State Databases to ON
+pulling data from the sensors
+Event 1492994517.36: Responding the temperature value to the gateway.
+The current temperature is 13 at time 1492994517.36
+Event 1492994524.38: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Event 1492994524.4: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+Event 1492994529.45: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+GATEWAY: ALERT! Motion when house empty - ringing alarms
+Event 1492994529.6: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1492994530.46: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+
+===================================================================================
+
+Note : For replicate all 'Test case 2' outputs, initialHomeState in src/config.py should be set to 'occupied'
+
+EVENT 2 - WITHOUT CRASH - WITHOUT CACHE
+OBSERVATIONS: Always cache miss - time taken mentioned in test/output_statistics.txt
+
+Events >>  ['T', '7', 'D', '9', 'M', 'D', '8', 'P', 'D', '6', 'M', '6', 'B0']
+
+<initial output same>
+
+pulling data from the sensors
+Event 1492995235.61: Responding the temperature value to the gateway.
+The current temperature is 26 at time 1492995235.61
+
+Event 1492995242.63: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Event 1492995243.0: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+
+Event 1492995252.05: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+pulling data from the sensors
+Responding the bulb state to the gateway.
+Smart Bulb is ON at time 1492995252.1
+Event 1492995252.24: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+ Updating Device ID 2 state on Both State Databases to MOTION-OFF
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: User is leaving the home. Turning on the security system and turn off lights.
+Gateway controlling the state of smart appliances
+Event 1492995253.41: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+
+Event 1492995260.49: Beacon presence sensed
+Storing event on database with Consistency messages
+Updating Device ID 3 state on Both State Databases to True
+Event 1492995261.55: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: User has just entered the home with presence. Turning off the security system.
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+Event 1492995267.92: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+pulling data from the sensors
+Responding the bulb state to the gateway.
+Smart Bulb is OFF at time 1492995267.96
+GATEWAY: Turn on Lights due to Motion
+Gateway controlling the state of smart appliances
+Event 1492995267.97: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1492995274.02: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+
+===================================================================================
+
+EVENT 2 - WITHOUT CRASH - WITH CACHE
+OBSERVATIONS: Always hit except the first time - time taken mentioned in test/output_statistics.txt
+
+Events >>  ['T', '7', 'D', '9', 'M', 'D', '8', 'P', 'D', '6', 'M', '6', 'B0']
+
+<intial same as above>
+
+Input no. of devices to be registered (1-6): 6
+Door sensor has been assigned an ID 1 and registered with gateway 9091
+Motion sensor has been assigned an ID 2 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9091
+Smart bulb has been assigned an ID 4 and registered with gateway 9090
+Smart outlet has been assigned an ID 5 and registered with gateway 9091
+Temperature sensor has been assigned an ID 6 and registered with gateway 9090
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+ELECTION DONE: Leader is  Gateway processing tier
+ELECTION DONE: Leader is  Gateway processing tier
+pulling data from the sensors
+Event 1492998300.2: Responding the temperature value to the gateway.
+The current temperature is 17 at time 1492998300.2
+Event 1492998307.22: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+Gateway controlling the state of smart appliances
+Event 1492998307.58: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+
+Event 1492998316.64: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+pulling data from the sensors
+Responding the bulb state to the gateway.
+Smart Bulb is ON at time 1492998316.69
+Event 1492998316.81: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: User is leaving the home. Turning on the security system and turn off lights.
+Gateway controlling the state of smart appliances
+Event 1492998317.69: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+
+Event 1492998325.76: Beacon presence sensed
+Storing event on database with Consistency messages
+Updating Device ID 3 state on Both State Databases to True
+Event 1492998326.81: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: User has just entered the home with presence. Turning off the security system.
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+Event 1492998332.89: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+pulling data from the sensors
+Responding the bulb state to the gateway.
+Smart Bulb is OFF at time 1492998332.94
+GATEWAY: Turn on Lights due to Motion
+Gateway controlling the state of smart appliances
+Event 1492998332.95: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1492998339.0: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+
+
+=========================================================================================
+
+TEST CASE : EVENT_CONSISTENCY : 
+SAME AS EVENT2 EXCEPT FOR CONSISTENCY CHECKS
+OBSERVATIONS: As shown the contents of the 2 database files are exactly the same - Strict Consistency
+
+Events >>  ['T', '7', 'D', '9', 'M', 'D', '1', 'C', '7', 'P', 'D', '6', 'M', '6', 'B0', '2', 'C']
+
+<same output as event2 other than shown..>
+
+pulling data from the sensors
+Event 1492997369.79: Responding the temperature value to the gateway.
+The current temperature is 46 at time 1492997369.79
+Event 1492997376.82: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE MISS: Data NOT present in Cache - getting from DB
+GATEWAY: ALERT! Intruder opened door without presence sensor Ring Alarm 
+
+...  ...
+
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+CONSISTENCY CHECK - At time 1492997388.33, ./database1 is
+[['1', ' DOOR-OPEN', ' 1492997376.82\n'], ['4', ' ON', ' 1492997377.17\n'], ['2', ' MOTION-ON', ' 1492997386.24\n'], ['1', ' DOOR-OPEN', ' 1492997386.39\n'], ['4', ' OFF', ' 1492997387.29\n']]
+CONSISTENCY CHECK - At time 1492997388.33, ./database2 is
+[['1', ' DOOR-OPEN', ' 1492997376.82\n'], ['4', ' ON', ' 1492997377.17\n'], ['2', ' MOTION-ON', ' 1492997386.24\n'], ['1', ' DOOR-OPEN', ' 1492997386.39\n'], ['4', ' OFF', ' 1492997387.29\n']]
+Event 1492997395.97: Beacon presence sensed
+Storing event on database with Consistency messages
+Updating Device ID 3 state on Both State Databases to True
+Event 1492997397.02: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+
+... ...
+
+GATEWAY: Turn on Lights due to Motion
+Gateway controlling the state of smart appliances
+Event 1492997403.17: Bulb turned on by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to ON
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1492997409.23: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+CONSISTENCY CHECK - At time 1492997411.27, ./database1 is
+[['1', ' DOOR-OPEN', ' 1492997376.82\n'], ['4', ' ON', ' 1492997377.17\n'], ['2', ' MOTION-ON', ' 1492997386.24\n'], ['1', ' DOOR-OPEN', ' 1492997386.39\n'], ['4', ' OFF', ' 1492997387.29\n'], ['3', ' True', ' 1492997395.97\n'], ['1', ' DOOR-OPEN', ' 1492997397.02\n'], ['2', ' MOTION-ON', ' 1492997403.1\n'], ['4', ' ON', ' 1492997403.17\n'], ['4', ' OFF', ' 1492997409.23\n']]
+CONSISTENCY CHECK - At time 1492997411.27, ./database2 is
+[['1', ' DOOR-OPEN', ' 1492997376.82\n'], ['4', ' ON', ' 1492997377.17\n'], ['2', ' MOTION-ON', ' 1492997386.24\n'], ['1', ' DOOR-OPEN', ' 1492997386.39\n'], ['4', ' OFF', ' 1492997387.29\n'], ['3', ' True', ' 1492997395.97\n'], ['1', ' DOOR-OPEN', ' 1492997397.02\n'], ['2', ' MOTION-ON', ' 1492997403.1\n'], ['4', ' ON', ' 1492997403.17\n'], ['4', ' OFF', ' 1492997409.23\n']]
+
+=========================================================================
+
+EVENT 3 - CRASH - T_CRASH = JUST AFTER USER ENTER EVENT
+OBSERVATIONS : Recovery from crash is gracefull - device id 2,4,6 re-registered But
+	       Data Loss happens - motion event is missed - system recovers and bulb event is processed 
+
+['M', '8', 'P', 'D', '9', 'M', '8', 'B0']
+
+<initial output same as before>
+
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+Gateway processing tier has been registered with ID: 8
+Gateway database tier has been registered with ID: 7
+All processes have been registered.
+ELECTION DONE: Leader is  Gateway processing tier
+ELECTION DONE: Leader is  Gateway processing tier
+Event 1493002686.24: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+GATEWAY: ALERT! Motion when house empty - ringing alarms
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1493002694.29: Beacon presence sensed
+Storing event on database with Consistency messages
+Updating Device ID 3 state on Both State Databases to True
+Event 1493002695.34: Door tried to be opened, informing gateway.
+Storing event on database with Consistency messages
+Updating Device ID 1 state on Both State Databases to DOOR-OPEN
+CACHE HIT: Data present in Cache
+GATEWAY: User has just entered the home with presence. Turning off the security system.
+Updating Device ID 1 state on Both State Databases to DOOR-CLOSED
+One gateway has crashed.
+Motion sensor has been assigned an ID 2 and registered with gateway 9091
+Smart bulb has been assigned an ID 4 and registered with gateway 9091
+Temperature sensor has been assigned an ID 6 and registered with gateway 9091
+One gateway has crashed.
+Event 1493002712.47: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+
+================================================================================
+
+EVENT 3 - CRASH - JUST BEFORE USER ENTER EVENT
+OBSERVATIONS : Recovery from crash is gracefull - device id 1,3,7 re-registered But
+	       Data Loss happens - user entry missed . As a result, motion triggers alarm although user is inside
+
+['M', '8', 'P', 'D', '9', 'M', '8', 'B0']
+
+<initial output same>
+
+Event 1492999248.02: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+GATEWAY: ALERT! Motion when house empty - ringing alarms
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Can not locate nameserver from 9090
+One gateway has crashed.
+Door sensor has been assigned an ID 1 and registered with gateway 9090
+Presence sensor has been assigned an ID 3 and registered with gateway 9090
+Smart outlet has been assigned an ID 5 and registered with gateway 9090
+One gateway has crashed.
+Event 1492999263.09: Sensor has sensed motion.
+Storing event on database with Consistency messages
+Updating Device ID 2 state on Both State Databases to MOTION-ON
+GATEWAY: ALERT! Motion when house empty - ringing alarms
+Updating Device ID 2 state on Both State Databases to MOTION-OFF
+Event 1492999271.13: Bulb turned off by the gateway.
+Storing event on database with Consistency messages
+Updating Device ID 4 state on Both State Databases to OFF
+
+=======================================================================

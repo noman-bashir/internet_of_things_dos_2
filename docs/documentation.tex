@@ -1,0 +1,398 @@
+\documentclass[12pt]{article}
+ 
+\usepackage[margin=1in]{geometry} 
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{enumitem}
+\usepackage{graphicx}
+\usepackage{multirow}
+\usepackage{siunitx}
+\usepackage[noend]{algpseudocode}
+\usepackage{algorithm}
+\usepackage{amsmath}
+\usepackage{mhchem}
+\begin{document}
+
+ 
+\title{Internet of Things - Fault tolerance, Replication, and Consistency}%replace X with the appropriate number
+\author{Noman Bashir, Shubham Mukherjee}
+\maketitle
+
+
+The goal of this project was to implement replication, load-balancing, consistency, caching, and fault tolerance.
+The project builds upon the previous lab exercise
+to make it more practical by enhancing reliability
+of the overall system. 
+We next describe the design decisions, trade-offs, 
+working of the system, and possible future 
+improvements. 
+
+\section{Design Decisions}
+There were five core requirements for the project:
+replication, load-balancing, consistency, caching, and 
+fault tolerance. The design decisions taken to
+achieve each objectives are described next. 
+\subsection{Replication}
+The first task of the project was to implement replication 
+where the two-tiers of the gateway server are replicated. 
+In an ideal scenario, both of these servers will be running
+on a separate machine having different IP addresses. 
+As during the implementation of the project, it is not 
+convenient to continuously test our code on two remote 
+machine, we decided to emulate the scenario one a single local machine. 
+We start two name servers at different ports: 9090 and 9091 with "localhost" as server for both. 
+\begin{itemize}
+	\item \textbf{Gateway Server 1: } Server Address: localhost, Server Port: 9090
+	\item \textbf{Gateway Server 1: } Server Address: localhost, Server Port: 9091
+\end{itemize}
+
+Having implemented this for the sake of convenience, we 
+argue that Pyro facilitates the use of any other IPs as server 
+addresses as long as they belong to the same network. 
+Hence, this functionality can be tested on two different 
+machines by simply changing the server address for both 
+gateways. 
+
+\subsection{Load-balancing}
+The next logical part of the assignment was to
+dynamically balance the load. 
+We implement this in three steps: 
+\begin{itemize}
+	\item In first step, we assign the devices an 
+	incremental ID that starts from 1. For example if four
+	devices are to be registered, they will be assigned IDs from 1 to 4. 
+	\item After ID assignment, the register function is called
+	on the devices and assigned ID is passed to them as 
+	a parameter. Upon receiving the ID, the devices register
+	themselves with a particular gateway based on their number. For example, devices with even IDs register 
+	themselves with gateway 1 and devices with odd IDs 
+	are assigned to gateway 2. In this way no matter how 
+	many devices are to be registered, they get divided 
+	evenly across the gateways. 
+	\item During the ID assignment these IDs are stored on 
+	an "id" file. The config file containing all the initial 
+	constants parses this file to store IDs for all devices, 
+	which are then used throughout the rest of the code. 
+\end{itemize}
+
+We believe that this mechanism will work even if the number of devices is large. Also, in case of n replicated gateways, 
+we can simply take modulo n instead of modulo 2 to 
+divide the load evenly across gateways. 
+
+\subsection{Consistency}
+The next part of the project was to implement the consistency mechanism 
+for the replicated gateways. We implemented a mechanism that ensured 
+strict consistency. The design decisions to enable it are following:
+
+\begin{itemize}
+	\item whenever a message arrives at one gateway, it stores the message and sends it
+	 to the other gateway as well. Upon receipt of the message, the second gateway stores 
+	 it into its database as well using the \textbf{recv\_write\_info()} function. 
+	 \item although the two gateways are inconsistent only for the time taken for the message to 
+	 travel from one gateway to the other. Another event may still occur at that gateway before it stores the 
+	 message. In order to tackle that, we check the timestamp of the last message stored in the gateway. 
+	 If it is lower than the message received, then we simply store the message in the database. However 
+	 if it is higher, we swap the two messages. 
+\end{itemize}
+
+\subsection{Caching}
+We implement caching at the gateway level and the
+rationale behind them is explained next.
+
+\begin{itemize}
+	\item \textbf we implement the caching at gateways using the FIFO mechanism. 
+	We argue that this mechanism is better suited for our application than the least recently used (LRU) 
+	mechanism. It's because our event order logic to translate events into actions just considers the last 
+	event. This scheme is implemented using \textbf{cache\_handler()} function. 
+	\item also, the cache size greater than 2 will always result in cache hits. It's because our event order logic 
+	just uses the last value from the database. The cache size of 2 will store the current event and the 
+	one before that resulting in 100\% cache hits.  
+\end{itemize}
+
+\subsection{Fault tolerance}
+
+The last important part of the assignment 
+was to implement a fault tolerance mechanism. 
+The devices should be able to sense if a gateway 
+goes down and register themselves with the other 
+gateway. We took the following design 
+decisions to implement the fault tolerance. 
+\begin{itemize}
+	\item Every gateway sends a periodic heartbeat to the devices	connected to it as well as the other gateway. 
+	All of the processes receiving the heartbeat wait for 
+	"heartbeat period + extra time" to check if the 
+	heartbeat is received. Extra time is added to account 
+	for the communication delays. The gateway sends the heartbeat using 
+	\textbf{sendPulse()} function and all the processes check the 
+	pulse using \textbf{checkPulse()} function.
+	\item We also decided to stop sending the heartbeat 
+	message once one gateway crashes. We argue that 
+	this is a reasonable design decision in the given scenario
+	as there is no use of heartbeat messages once the 
+	backup gateway has failed. In case of more than 2 gateways, the checks can be removed easily to continue 
+	the heartbeat mechanism on the live servers. 
+	\item After the devices have sensed that gateway has 
+	gone down, they re-register themselves with the backup
+	gateway with the same ID as before. This won't cause 
+	any problem as all the devices in the network have 
+	unique IDs. 
+\end{itemize}
+
+\section{How it works?}
+The process to run a test case for this project is explained in the README file. However, the overall
+ flow of actions can be described as follows:
+ 
+ \begin{itemize}
+ 	\item[1] Two Pyro name servers start at localhost with ports 9090 and 9091. They can also be started at 
+ 	any given IP addresses, but that would have to be added to the config file as well.
+ 	\item[2] registerProcess.py script is used to register the processes. It asks user to input the no. of 
+ 	devices (n) to be registered between 0 and 6. It selects the first n devices from the list containing all
+ 	devices and registers them. 
+ 	\item[3] Registration process is dynamic. The devices are assigned incremental IDs and they evenly 
+ 	divide themselves between gateways based on their evenness. 
+ \end{itemize}
+
+The previous steps described how replication and dynamic load-balancing are implemented. 
+We next describe the flow of actions for consistency and caching mechanism. 
+
+\begin{itemize}
+	\item[4] whenever an event occurs at a gateway, it sends the event information to the other gateway. 
+	Upon receiving the message, the receiving gateway stores the value into the database. 
+	\item[5] The value is also stored in the cache as well. When event order logic is to be implemented, 
+	the program fetches the values from the cache if possible. 
+\end{itemize}
+
+We next describe the sequence of actions that take place to implement fault tolerance. 
+
+\begin{itemize}
+	\item[6] As soon as the gateway servers start, they begin sending heartbeat to the 
+	devices connected to it and the other gateway as well. 
+	\item[7] All of these processes implement a listener mechanism as well which checks 
+	if the last heartbeat has been received or not. 
+	\item[8] If a server crashes, all of the devices connected to it and backup gateway miss the 
+	heartbeat and conclude that the gateway has gone down. 
+	\item[9] The backup gateway stops sending the heartbeat and also informs the devices 
+	connected to it to not expect a heartbeat. 
+	\item[10] The devices connected to crashed gateway register themselves with new gateway 
+	and start communicating with it. 
+\end{itemize}
+
+
+\section{Design Trade-offs and Assumptions}
+
+
+
+There are some trade-offs and assumptions that we made during the design 
+of the project. The details of these trade-offs is explained below:
+
+\begin{itemize}
+	\item \textbf{Fault Tolerance: } In fault tolerance, we stop sending the heartbeat once 
+	one gateway has crashed. Our rationale behind this decision is that there is no use of
+	such information when there is no other gateway available. We further argue that in a 
+	typical home scenario, we don't expect to have more than two gateways and this design 
+	decision suits the application scenario. It is beneficial to do that as it reduces communication
+	overhead.
+	
+	\item \textbf{Consistency: } When a gateway receives an update from the other one, it 
+	checks if it is the latest entry. If an event has happened on the receiving gateway and stored 
+	in the database, we swap the two values so that the two databases are consistent. 
+	We make a decision to check the time stamp of only last event saved to avoid complexity. 
+	We believe that our decision is justified given the second gateway receives the message
+	only after t seconds delay which is very low (less than 10ms as computed in last lab), since both 
+	gateways are on same network. It is highly improbable that even one event will occur 
+	during this time.
+	
+	\item \textbf{Fault Tolerance: } When one gateway crashes, it will take some time to 
+	notice that crash and get registered with the other gateway. There may be some events that
+	occur for a particular device during this time interval. In actual scenario, such events will happen 
+	but won't be notified to the alive gateway. 
+	
+	One way to tackle it can be that the device informs the alive gateway after registering if an event
+	 has happened and gateway takes an appropriate action depending on the nature of the event. 
+	 For example, it may be okay to ignore a temperature update or bulb changing its state. 
+	 
+	 However, in the current implementation, we emulate the gateway server going down by 
+	 shutting down the nameserver connected to it. Hence, our user process is not even able to 
+	 access any device and control its state. Therefore, when user makes such a call, we print 
+	 a message that event has occurred but the gateway cannot be accesses, and the home should 
+	 move into a safety state. In actual, the event will happen on the device, could be sent 
+	 upon registering, and appropriate action can be taken afterwards. 
+	 
+\end{itemize}
+
+
+
+\section{Possible Improvements and Extensions}
+
+Our project has a strong core which implemented all of the core requirements
+for the project. We have outlined some of the assumption that we made during 
+this project as outlined in the previous sections. However, some of the further 
+possible improvements in the core system as well as application are envisioned
+below:
+
+\begin{itemize}
+	\item \textbf{Implementation of RAFT algorithm: } Although we described in 
+	detail the 	RAFT algorithm in the context of this system, we ran out of time 
+	to implement this into our system. We would like to implement this algorithm 
+	in future. 
+	\item \textbf{Data loss in case of name server crash: } In current implementation, 
+	the user is not able to do any task on corresponding devices after name server 
+	goes down. We didn't do it as it would have had consequences 
+	on our event order logic, which we argue that is better off with out this knowledge
+	considering that these events may be ordinary one that don't matter. 
+	 It won't be possible to do with Pyro, but we can atleast store these 
+	states inside the user process and send this information to the new gateway
+	to store in database as well as change the state of the devices in their respective
+	processes to be consistent.
+\end{itemize}
+
+
+\section{RAFT Consensus Algorithm}
+
+The accurate working of our system depends upon the ordering of the events. 
+As we retrieve values from the database for event order logic, it becomes crucial for 
+us to store the values in correct order. 
+In our algorithm, one event occurring at a single gateway should be propagated to all
+the gateways and stored on the respective databases. 
+We plan to use RAFT consensus algorithm for this purpose. 
+We first present the pseudo algorithm for the leader election 
+process and then move onto describing how the events are committed
+to the database. 
+
+Algorithm \ref{alg:raft} presents the leader election part of the RAFT consensus algorithm. 
+We base this on the description provided on the website by the developers of this 
+algorithm. All of the nodes start as followers and we assume that election timeout occurs for
+one or more of the gateways. Upon timeout the followers turn into candidates and 
+start election process by asking for votes by sending \textit{vote\_for\_me}. 
+If another gateway receives vote message, it replies with a \textit{yes} vote if it neither have not 
+replied, nor started the election with a higher term number. Otherwise, it replies with a \textit{no} vote. 
+The candidate gateway counts the vote and becomes leaders if successful, otherwise process is 
+restarted.  Upon winning the election, it calls the heartbeat function to start sending the heartbeats. 
+The heartbeat function (Algorithm \ref{alg:heartbeat}) is described below:
+
+\begin{itemize}
+	\item In the context of this system, we assume each gateway as a user who wants to commit a 
+	value to all databases when an event occurs at it.
+	\item Whenever it has something to commit, 
+	it sends that value to the leader which in turn sends it to all the gateways and asks them 
+	to store the value. 
+	\item  The receiving gateways stores the value and reply with a \textit{yes\_stored}
+	message.
+	\item  If majority of the gateways respond positively, the leader proceeds with commit 
+	changes locally and also sends a \textit{commit} message to all the gateways.
+\end{itemize}
+
+ This scheme 
+works fine even in the presence of faults and missing gateways. However this algorithm suffers 
+one drawback. If the leader receives a newer value before an older value which is received at the 
+leader with some delay, the newer value will be committed before the older value. 
+This serves the consensus purpose as all of the databases are in the same state, but 
+it may not work in the context of this system which works based on the exact event ordering. 
+
+In order to solve this potential issue we use both \textbf{RAFT + Paxos}. We assume that 
+whenever an event occurs at any gateway, it informs all the other gateways about it rather 
+than only the leader. The algorithm is described below: 
+\begin{itemize}
+	\item  All of the gateways maintain a temporary queue in which they save the 
+	event information before commit. 
+	\item Leader sends all of the gateways a message purposing a certain commit event. 
+	\item If a gateway also has that event on top of the queue, it sends \textit{okay} message. However if it has some other value, it suggests that value to the gateway and replies \textit{no}. 
+	\item Leader counts \textit{okay} votes. If it gets the majority votes, it commits the changes 
+	locally and asks all of the other gateways to commit that change. 
+	\item If it doesn't get strict majority, it checks the response of the gateways to get the most 
+	suggested value. It proceeds the commit with this value, if it is suggested by more than half members, and asks all other gateways to commit it. 
+\end{itemize}
+
+This algorithm assumes that the event queue at most of the gateways will be in correct order. 
+We argue that it is a realistic assumption as conflict only occurs when an event happens on a gateway 
+before a message about previous event on a any other gateway is received. As the delay is only less 
+than 10ms, we argue that this issue would rarely happen. 
+
+
+%However it is quite possible that there may be other events occurring simultaneously
+%at other gateways. In this case, we need to reach a consensus on which event 
+%should be stored in the database at each gateway. 
+
+
+\begin{algorithm} []
+	\caption{RAFT Consensus Algorithm}
+	\label{alg:raft}
+	\begin{algorithmic}[1]
+		\Require $list\_of\_ids, total\_number \ (k)$
+		\State $ start \ as \ follower$
+		\State $ start \ listening \ $
+		\If{$(election \ timeout)$}
+			\State $ become \ candidate$
+			\State $ start \ election \ process$
+			\State $ vote\_count \ ++  $
+		\Else
+			\If {$ (recv\_msg == vote\_for\_me) $}
+				\If {$already\_replied$}
+					\State $ vote \ no$
+				\ElsIf {$(haven't \ replied) $}
+					\If {$(started \ election \ with \ higher \ term)$}
+						\State $ vote  \ no$
+					\ElsIf{$(started \ election \ with \ lower  \ term)$}
+						\State $cancel \ election \ \& \ vote \ yes$
+					\ElsIf{$(started \ election \ with \ equal \ term)$}
+						\State $vote \ yes$
+					\Else 
+						\State $vote \ yes$
+					\EndIf
+				\EndIf
+			\ElsIf {$(recv\_msg == vote\_reply)$}
+				\State $ count \ yes \ votes,  \ count ++$
+				\State $ at \ the \ end \ of \ counting$
+					\If {$( count > k/2 )$}
+						\State $ election \ won$
+						\State $ call \ heartbeat() $
+					\Else
+						\State $ wait \ \& \ restart \ election$
+					\EndIf
+			\ElsIf {$(recv\_msg == heartbeat)$}
+				\State $ reset \ election \ timeout$
+				\If {$(recv\_msg == set \ x)$}
+					\State $ store \ x $
+					\State $ reply \ yes\_stored$
+				\ElsIf{$(recv\_msg == commit\ x)$}
+					\State $ commit \ x$
+					\State $ reply \ yes$	
+				\Else
+					\State $reply \ anything$			
+				\EndIf
+			\EndIf 
+		\EndIf		
+	\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm} []
+	\caption{HEARTBEAT()}
+	\label{alg:heartbeat}
+	\begin{algorithmic}[1]
+\Function{heartbeat}{ }		
+\State $while(true)$
+\If {$(input \ from \ user: \ commits \ x)$}
+	\State $ send \ x \ as \ heartbeat$
+\ElsIf{$(reply \ received \ from \ followers)$}
+	\If {$(recv\_msg == yes\_stored)$}
+		\State $ count \ yes \ votes,  \ count ++$
+		\State $ at \ the \ end \ of \ counting$
+		\If {$( count > k/2 )$}
+			\State $ commit \ changes \ locally$
+			\State $ send \ commit \ msg$
+		\Else
+			\State $ send \ discard \ msg$
+		\EndIf
+		\State $ respond \ user$
+	\EndIf
+\State $sleep(heartbeat \ time)$
+\Else
+\State $send \ empty \ heartbeat$ 
+\EndIf
+\EndFunction
+
+\end{algorithmic}
+\end{algorithm}
+
+
+\end{document}
